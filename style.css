@@ -684,9 +684,23 @@ h1 {
   z-index: 2; /* Glow above borders */
 }
 
-.cell.error {
+.cell.error,
+.cell.check-error {
   color: var(--text-error);
   background-color: var(--bg-error);
+}
+
+.cell.check-correct {
+  animation: flash-correct 1.5s ease-out;
+}
+
+@keyframes flash-correct {
+  0% {
+    background-color: rgba(16, 185, 129, 0.45);
+  }
+  100% {
+    background-color: transparent;
+  }
 }
 
 /* 3x3 Grid for Pencil Notes */
@@ -734,10 +748,10 @@ h1 {
   margin-top: 6px;
 }
 
-/* Utility buttons row (Undo, Pencil, Erase) */
+/* Utility buttons row (Undo, Pencil, Erase, Check) */
 .actions-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
 }
 

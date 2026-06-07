@@ -10,6 +10,7 @@ const state = {
   initialBoard: Array(81).fill(0),  // Original clues (0-9)
   solutionBoard: Array(81).fill(0), // The solved board
   notes: Array(81).fill(null).map(() => Array(10).fill(false)), // Pencil marks
+  checkedErrors: Array(81).fill(false), // Track error checker highlights
   
   history: [],               // Undo stack
   selectedCell: null,        // Index (0-80) of active cell
@@ -794,6 +795,10 @@ function setCellValue(val) {
 
   pushHistory();
 
+  if (state.checkedErrors) {
+    state.checkedErrors[idx] = false;
+  }
+
   if (state.notesMode) {
     if (val === 0) {
       state.notes[idx] = Array(10).fill(false);
@@ -831,6 +836,45 @@ function handleUndo() {
 
 function handleErase() {
   setCellValue(0);
+}
+
+function handleCheckErrors() {
+  if (!state.gameInProgress) return;
+
+  let hasErrors = false;
+  let hasUserValues = false;
+
+  state.checkedErrors.fill(false);
+
+  for (let i = 0; i < 81; i++) {
+    if (state.initialBoard[i] === 0 && state.board[i] !== 0) {
+      hasUserValues = true;
+      if (state.board[i] !== state.solutionBoard[i]) {
+        state.checkedErrors[i] = true;
+        hasErrors = true;
+      }
+    }
+  }
+
+  updateUI();
+  saveGameData();
+
+  if (hasErrors) {
+    playSound('error');
+  } else if (hasUserValues) {
+    playSound('notes');
+    for (let i = 0; i < 81; i++) {
+      if (state.initialBoard[i] === 0 && state.board[i] !== 0) {
+        const cellEl = document.getElementById(`cell-${i}`);
+        if (cellEl) {
+          cellEl.classList.add('check-correct');
+          setTimeout(() => {
+            cellEl.classList.remove('check-correct');
+          }, 1500);
+        }
+      }
+    }
+  }
 }
 
 function handleCellSelect(idx) {
@@ -924,6 +968,7 @@ function saveGameData() {
     initialBoard: state.initialBoard,
     solutionBoard: state.solutionBoard,
     notes: state.notes,
+    checkedErrors: state.checkedErrors,
     timer: state.timer,
     difficulty: state.difficulty,
     gameInProgress: state.gameInProgress,
@@ -946,6 +991,7 @@ function loadGameData() {
         state.initialBoard = gameData.initialBoard || [...gameData.board];
         state.solutionBoard = gameData.solutionBoard || [];
         state.notes = gameData.notes || Array(81).fill(null).map(() => Array(10).fill(false));
+        state.checkedErrors = gameData.checkedErrors || Array(81).fill(false);
         state.timer = gameData.timer || 0;
         state.gameInProgress = gameData.gameInProgress ?? false;
         
@@ -1015,6 +1061,7 @@ function updateUI() {
     const val = state.board[i];
     const isGiven = state.initialBoard[i] !== 0;
     const isError = errors.includes(i);
+    const isCheckError = state.checkedErrors && state.checkedErrors[i];
     
     const cellEl = document.createElement('div');
     cellEl.classList.add('cell');
@@ -1077,6 +1124,10 @@ function updateUI() {
 
     if (isError) {
       cellEl.classList.add('error');
+    }
+
+    if (isCheckError) {
+      cellEl.classList.add('check-error');
     }
 
     cellEl.addEventListener('click', () => handleCellSelect(i));
@@ -1147,6 +1198,7 @@ function startNewGame() {
     state.board = [...puzzle];
     state.solutionBoard = [...solved];
     state.notes = Array(81).fill(null).map(() => Array(10).fill(false));
+    state.checkedErrors = Array(81).fill(false);
     state.history = [];
     state.selectedCell = null;
     
@@ -1286,6 +1338,7 @@ document.addEventListener('DOMContentLoaded', () => {
         pushHistory();
         state.board = [...state.initialBoard];
         state.notes = Array(81).fill(null).map(() => Array(10).fill(false));
+        state.checkedErrors.fill(false);
         state.selectedCell = null;
         state.timer = 0;
         updateTimerDisplay();
@@ -1337,6 +1390,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateUI();
   });
   document.getElementById('erase-btn').addEventListener('click', handleErase);
+  document.getElementById('check-btn').addEventListener('click', handleCheckErrors);
 
 
   // C. Dialog overlay actions
