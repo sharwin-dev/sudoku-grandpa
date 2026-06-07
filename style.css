@@ -221,6 +221,7 @@ html, body {
   overflow-y: auto; /* Allow scrolling on the dashboard if necessary */
   animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   -webkit-overflow-scrolling: touch; /* Smooth touch inertia on iOS */
+  padding-top: 4px; /* Prevents top-of-text clipping from tight line-heights */
 }
 
 /* Hide inactive panels */
