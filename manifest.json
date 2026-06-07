@@ -1,0 +1,30 @@
+{
+  "name": "Personalized Sudoku PWA",
+  "short_name": "Sudoku",
+  "description": "A beautiful, premium, ad-free Sudoku game optimized for iPad.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#fbf9f4",
+  "theme_color": "#0f172a",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

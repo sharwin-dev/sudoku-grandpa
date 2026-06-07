@@ -1,0 +1,113 @@
+name: Quality Check → Deploy → Release
+
+on:
+  push:
+    branches: [main]
+
+# Required permissions for GitHub Pages deployment
+permissions:
+  contents: write       # needed to push git tags & create releases
+  pages: write          # needed to deploy to GitHub Pages
+  id-token: write       # needed for OIDC Pages deployment
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  # ─────────────────────────────────────────────
+  # JOB 1: Code Quality Gate
+  # ─────────────────────────────────────────────
+  quality:
+    name: 🔍 Quality Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check JS syntax
+        run: node --check app.js && echo "✅ app.js syntax OK"
+
+      - name: Validate HTML structure
+        run: |
+          if grep -q "</html>" index.html; then
+            echo "✅ index.html looks valid"
+          else
+            echo "❌ index.html missing closing tag" && exit 1
+          fi
+
+      - name: Check required files exist
+        run: |
+          for f in index.html style.css app.js sw.js manifest.json icon.svg; do
+            [ -f "$f" ] && echo "✅ $f found" || (echo "❌ $f missing" && exit 1)
+          done
+
+  # ─────────────────────────────────────────────
+  # JOB 2: Deploy to GitHub Pages
+  # ─────────────────────────────────────────────
+  deploy:
+    name: 🚀 Deploy to GitHub Pages
+    needs: quality
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload static site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # ─────────────────────────────────────────────
+  # JOB 3: Auto Version Tag & Release
+  # ─────────────────────────────────────────────
+  release:
+    name: 🏷️ Auto Version & Release
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history needed for tag counting
+
+      - name: Generate version tag
+        id: version
+        run: |
+          # Count existing tags to auto-increment version
+          COUNT=$(git tag | grep -c "^v" || echo 0)
+          NEXT=$((COUNT + 1))
+          echo "tag=v1.${NEXT}" >> $GITHUB_OUTPUT
+          echo "Generated tag: v1.${NEXT}"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: "SudokuGrandpa ${{ steps.version.outputs.tag }}"
+          body: |
+            ## 🎲 SudokuGrandpa ${{ steps.version.outputs.tag }}
+
+            Deployed automatically from commit `${{ github.sha }}` by ${{ github.actor }}.
+
+            **Changes in this release:**
+            ${{ github.event.head_commit.message }}
+
+            🌐 **Live at:** https://sharwin-dev.github.io/sudoku-grandpa/
+          files: |
+            index.html
+            style.css
+            app.js
+            sw.js
+            manifest.json
+            icon.svg
