@@ -209,7 +209,7 @@ html, body {
   max-width: 800px;
   margin: 0 auto;
   padding: 12px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* Screen View Panels styling */
@@ -232,9 +232,7 @@ html, body {
 /* A. DASHBOARD VIEW STYLING                  */
 /* ========================================== */
 
-.hub-header {
-  margin-bottom: 14px;
-}
+
 
 .hub-header .header-logo {
   font-size: 2.2rem;
@@ -465,8 +463,8 @@ html, body {
 /* B. GAME SCREEN VIEW STYLING                */
 /* ========================================== */
 
-/* Header & Controls Panel */
-header {
+/* Game view header only */
+#game-view header {
   width: 100%;
   display: flex;
   justify-content: space-between;
@@ -479,6 +477,21 @@ header {
   border-radius: 16px;
   box-shadow: var(--shadow-sm);
   margin-bottom: 6px;
+  flex-shrink: 0;
+}
+
+/* Dashboard header — plain, no pill box */
+#dashboard-view header.hub-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 4px;
+  margin-bottom: 14px;
+  background: none;
+  border: none;
+  box-shadow: none;
+  flex-shrink: 0;
 }
 
 .brand-section {
