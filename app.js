@@ -22,8 +22,9 @@ const state = {
   playerName: '',            // Custom name for header personalization
   
   difficulty: 'medium',      // 'easy' or 'medium'
-  theme: 'paper',            // 'paper', 'midnight', 'emerald'
+  theme: 'paper',            // 'paper', 'midnight', 'emerald', 'lavender', 'newspaper'
   soundMuted: false,         // Control dynamic chime sounds
+
   currentView: 'dashboard',  // 'dashboard' or 'game'
   puzzleNumber: 1,           // Current selected puzzle number (1-1000)
   currentLevelPage: 1,       // Current page in level grid (1-50)
@@ -799,6 +800,8 @@ function setCellValue(val) {
     state.checkedErrors[idx] = false;
   }
 
+  let triggerBurst = false;
+
   if (state.notesMode) {
     if (val === 0) {
       state.notes[idx] = Array(10).fill(false);
@@ -808,20 +811,86 @@ function setCellValue(val) {
     }
     playSound('notes');
   } else {
+    const wasCorrect = state.board[idx] === state.solutionBoard[idx];
+    const isNowCorrect = val === state.solutionBoard[idx];
+    
     state.board[idx] = val;
     state.notes[idx] = Array(10).fill(false); 
     
     if (val !== 0) {
       playSound('click');
+      if (!wasCorrect && isNowCorrect) {
+        triggerBurst = true;
+      }
     } else {
       playSound('erase');
     }
   }
 
   updateUI();
+  
+  if (triggerBurst) {
+    createParticleBurst(idx);
+  }
+
   saveGameData();
   checkWinCondition();
 }
+
+function createParticleBurst(cellIdx) {
+  const cellEl = document.getElementById(`cell-${cellIdx}`);
+  if (!cellEl) return;
+
+  const particleCount = 16;
+  const colors = ['#3b82f6', '#10b981', '#fbbf24', '#ef4444', '#a855f7', '#ec4899', '#06b6d4', '#f97316'];
+
+  for (let i = 0; i < particleCount; i++) {
+    const particle = document.createElement('div');
+    particle.classList.add('cell-particle');
+
+    // Randomize angle and distance
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 40 + Math.random() * 50; // Fly distance (40px to 90px)
+    const x = Math.cos(angle) * distance;
+    const y = Math.sin(angle) * distance;
+
+    // Set translation targets as CSS variables
+    particle.style.setProperty('--x', `${x}px`);
+    particle.style.setProperty('--y', `${y}px`);
+
+    // Styling
+    const size = 5 + Math.random() * 7; // Size (5px to 12px)
+    particle.style.width = `${size}px`;
+    particle.style.height = `${size}px`;
+
+    // Randomize background color
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    particle.style.setProperty('--particle-color', randomColor);
+
+    // Randomize shape (50% circle, 30% square, 20% triangle)
+    const shapeRand = Math.random();
+    if (shapeRand < 0.5) {
+      particle.style.borderRadius = '50%'; // Circle
+    } else if (shapeRand < 0.8) {
+      particle.style.borderRadius = '2px'; // Rounded Square
+    } else {
+      // Triangle using clip-path
+      particle.style.clipPath = 'polygon(50% 0%, 0% 100%, 100% 100%)';
+    }
+
+    // Add a tiny random delay to make the burst look natural
+    const delay = Math.random() * 0.1;
+    particle.style.animationDelay = `${delay}s`;
+
+    cellEl.appendChild(particle);
+
+    // Auto-cleanup DOM after animation finishes
+    setTimeout(() => {
+      particle.remove();
+    }, 800);
+  }
+}
+
 
 function handleUndo() {
   if (!state.gameInProgress || state.history.length === 0) return;
