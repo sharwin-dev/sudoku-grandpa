@@ -334,18 +334,13 @@ function setNextUnsolvedPuzzle() {
     nextNum++;
   }
   state.puzzleNumber = nextNum;
-  updatePuzzleNumberUI();
+  updatePuzzleNumberUI(true);
 }
 
 function selectAndPlayPuzzle(num) {
   state.puzzleNumber = num;
   saveLobbySelection();
-  
-  // Render immediately to update active card styling
-  renderCarousel();
-  
-  // Slide the active card into the center of the carousel
-  centerActiveCard();
+  updatePuzzleNumberUI();
 }
 
 function centerActiveCard() {
@@ -393,6 +388,7 @@ function renderCarousel() {
   for (let num = adjustedStartNum; num <= endNum; num++) {
     const card = document.createElement('div');
     card.classList.add('puzzle-card');
+    card.setAttribute('data-num', num);
     if (num === state.puzzleNumber) {
       card.classList.add('active');
     }
@@ -509,9 +505,39 @@ function updatePlayButtonsUI() {
   }
 }
 
-function updatePuzzleNumberUI() {
-  renderCarousel();
-  setTimeout(centerActiveCard, 50);
+let carouselRenderTimeout = null;
+function updatePuzzleNumberUI(immediate = false) {
+  // Update the bottom play button/status details immediately for instant user feedback
+  updatePlayButtonsUI();
+
+  // If the target card is already rendered, update its active styling and scroll it into view immediately
+  const carouselEl = document.getElementById('puzzle-carousel');
+  if (carouselEl) {
+    const prevActive = carouselEl.querySelector('.puzzle-card.active');
+    if (prevActive) {
+      prevActive.classList.remove('active');
+    }
+    const newActive = carouselEl.querySelector(`.puzzle-card[data-num="${state.puzzleNumber}"]`);
+    if (newActive) {
+      newActive.classList.add('active');
+      newActive.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  }
+
+  // Debounce the heavy full DOM rebuild and dynamic puzzle generation (prevents freeze on fast clicks)
+  if (carouselRenderTimeout) {
+    clearTimeout(carouselRenderTimeout);
+  }
+
+  if (immediate) {
+    renderCarousel();
+    setTimeout(centerActiveCard, 50);
+  } else {
+    carouselRenderTimeout = setTimeout(() => {
+      renderCarousel();
+      setTimeout(centerActiveCard, 50);
+    }, 150);
+  }
 }
 
 function showModal(modalEl) {
@@ -632,7 +658,7 @@ function showDashboard() {
   if (completed.includes(state.puzzleNumber)) {
     setNextUnsolvedPuzzle();
   } else {
-    updatePuzzleNumberUI();
+    updatePuzzleNumberUI(true);
   }
   
   // Sync and update play buttons with dynamic informative text
