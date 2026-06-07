@@ -86,11 +86,9 @@ jobs:
       - name: Generate version tag
         id: version
         run: |
-          # Count existing tags to auto-increment version
-          COUNT=$(git tag | grep -c "^v" || echo 0)
-          NEXT=$((COUNT + 1))
-          echo "tag=v1.${NEXT}" >> $GITHUB_OUTPUT
-          echo "Generated tag: v1.${NEXT}"
+          TAG="v1.${{ github.run_number }}"
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "Generated tag: ${TAG}"
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
