@@ -34,7 +34,9 @@ const state = {
     completedEasy: [],       // List of solved Easy puzzle numbers
     completedMedium: [],     // List of solved Medium puzzle numbers
     bestEasy: null,
-    bestMedium: null
+    bestMedium: null,
+    timesEasy: {},           // { puzzleNum: solveTimeInSeconds }
+    timesMedium: {}          // { puzzleNum: solveTimeInSeconds }
   }
 };
 
@@ -430,7 +432,9 @@ function renderCarousel() {
     const status = document.createElement('div');
     status.classList.add('card-status');
     if (isCompleted) {
-      status.innerText = 'Solved';
+      const times = state.difficulty === 'easy' ? state.stats.timesEasy : state.stats.timesMedium;
+      const solveTime = times[num];
+      status.innerText = solveTime !== undefined ? formatTime(solveTime) : 'Solved';
     } else if (isInProgress) {
       status.innerText = 'In Progress';
     } else {
@@ -488,7 +492,9 @@ function updatePlayButtonsUI() {
 
   if (statusEl) {
     if (isCompleted) {
-      statusEl.innerText = 'Solved';
+      const times = currentDiff === 'easy' ? state.stats.timesEasy : state.stats.timesMedium;
+      const solveTime = times[currentNum];
+      statusEl.innerText = solveTime !== undefined ? `Solved in ${formatTime(solveTime)}` : 'Solved';
       statusEl.style.color = 'var(--text-user)';
     } else if (isInProgress) {
       statusEl.innerText = `In Progress (${formatTime(savedTimer)})`;
@@ -718,7 +724,9 @@ function loadStats() {
           completedEasy: Array.isArray(parsed.completedEasy) ? parsed.completedEasy : [],
           completedMedium: Array.isArray(parsed.completedMedium) ? parsed.completedMedium : [],
           bestEasy: typeof parsed.bestEasy === 'number' ? parsed.bestEasy : null,
-          bestMedium: typeof parsed.bestMedium === 'number' ? parsed.bestMedium : null
+          bestMedium: typeof parsed.bestMedium === 'number' ? parsed.bestMedium : null,
+          timesEasy: (parsed.timesEasy && typeof parsed.timesEasy === 'object') ? parsed.timesEasy : {},
+          timesMedium: (parsed.timesMedium && typeof parsed.timesMedium === 'object') ? parsed.timesMedium : {}
         };
         return;
       }
@@ -731,7 +739,9 @@ function loadStats() {
     completedEasy: [],
     completedMedium: [],
     bestEasy: null,
-    bestMedium: null
+    bestMedium: null,
+    timesEasy: {},
+    timesMedium: {}
   };
 }
 
@@ -765,12 +775,22 @@ function recordGameWin(difficulty, elapsedSeconds, puzzleNum) {
     if (state.stats.bestEasy === null || elapsedSeconds < state.stats.bestEasy) {
       state.stats.bestEasy = elapsedSeconds;
     }
+    // Store solve time per puzzle (keep best time if replayed)
+    const prevTime = state.stats.timesEasy[puzzleNum];
+    if (prevTime === undefined || elapsedSeconds < prevTime) {
+      state.stats.timesEasy[puzzleNum] = elapsedSeconds;
+    }
   } else if (difficulty === 'medium') {
     if (!state.stats.completedMedium.includes(puzzleNum)) {
       state.stats.completedMedium.push(puzzleNum);
     }
     if (state.stats.bestMedium === null || elapsedSeconds < state.stats.bestMedium) {
       state.stats.bestMedium = elapsedSeconds;
+    }
+    // Store solve time per puzzle (keep best time if replayed)
+    const prevTime = state.stats.timesMedium[puzzleNum];
+    if (prevTime === undefined || elapsedSeconds < prevTime) {
+      state.stats.timesMedium[puzzleNum] = elapsedSeconds;
     }
   }
   
