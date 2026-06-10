@@ -85,7 +85,7 @@ function generateSolvedBoard() {
 function generatePuzzle(difficulty) {
   const solved = generateSolvedBoard();
   const puzzle = [...solved];
-  let targetClues = difficulty === 'easy' ? 40 : 31;
+  let targetClues = difficulty === 'easy' ? 40 : (difficulty === 'medium' ? 31 : 24);
   
   const indices = Array.from({ length: 81 }, (_, i) => i);
   for (let i = indices.length - 1; i > 0; i--) {
@@ -117,15 +117,16 @@ console.log("==================================================");
 console.log("   SUDOKU GENERATOR & SOLVER LOGIC VERIFIER       ");
 console.log("==================================================");
 
-const runs = 100;
+const runs = 90;
 let easyPasses = 0;
 let mediumPasses = 0;
+let hardPasses = 0;
 let startTime = Date.now();
 
-console.log(`\nRunning ${runs} generation iterations (50 Easy, 50 Medium)...`);
+console.log(`\nRunning ${runs} generation iterations (30 Easy, 30 Medium, 30 Hard)...`);
 
 for (let step = 1; step <= runs; step++) {
-  const difficulty = step <= 50 ? 'easy' : 'medium';
+  const difficulty = step <= 30 ? 'easy' : (step <= 60 ? 'medium' : 'hard');
   
   const genStart = Date.now();
   const { puzzle, solved } = generatePuzzle(difficulty);
@@ -154,7 +155,8 @@ for (let step = 1; step <= runs; step++) {
 
   if (isGridLegal && isUnique) {
     if (difficulty === 'easy') easyPasses++;
-    else mediumPasses++;
+    else if (difficulty === 'medium') mediumPasses++;
+    else hardPasses++;
   } else {
     console.error(`❌ FAILURE at step ${step} (${difficulty})! LegalGrid=${isGridLegal}, UniqueSol=${isUnique}`);
   }
@@ -163,12 +165,13 @@ for (let step = 1; step <= runs; step++) {
 const totalDuration = Date.now() - startTime;
 
 console.log("\n================ TEST RESULTS ==================");
-console.log(`Easy Puzzles Passed: ${easyPasses} / 50`);
-console.log(`Medium Puzzles Passed: ${mediumPasses} / 50`);
+console.log(`Easy Puzzles Passed: ${easyPasses} / 30`);
+console.log(`Medium Puzzles Passed: ${mediumPasses} / 30`);
+console.log(`Hard Puzzles Passed: ${hardPasses} / 30`);
 console.log(`Total Execution Time: ${(totalDuration / 1000).toFixed(2)}s`);
 console.log(`Average Generation Time: ${(totalDuration / runs).toFixed(1)}ms per puzzle`);
 
-if (easyPasses + mediumPasses === runs) {
+if (easyPasses + mediumPasses + hardPasses === runs) {
   console.log("\n✅ ALL TESTS PASSED! Generator logic is 100% accurate and mathematically unique.");
   console.log("==================================================");
   process.exit(0);

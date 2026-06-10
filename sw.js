@@ -1,9 +1,9 @@
-const CACHE_NAME = 'sudoku-v22';
+const CACHE_NAME = 'sudoku-v23';
 const ASSETS = [
   './',
   './index.html',
-  './style.css?v=22',
-  './app.js?v=22',
+  './style.css?v=23',
+  './app.js?v=23',
   './manifest.json',
   './icon.svg',
   './icon-192.png',
@@ -56,4 +56,11 @@ self.addEventListener('fetch', (e) => {
         return caches.match(e.request, { ignoreSearch: true });
       })
   );
+});
+
+// Message Event - Skip Waiting on message from client
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.action === 'skipWaiting') {
+    self.skipWaiting();
+  }
 });

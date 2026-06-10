@@ -33,10 +33,13 @@ const state = {
   stats: {
     completedEasy: [],       // List of solved Easy puzzle numbers
     completedMedium: [],     // List of solved Medium puzzle numbers
+    completedHard: [],       // List of solved Hard puzzle numbers
     bestEasy: null,
     bestMedium: null,
+    bestHard: null,
     timesEasy: {},           // { puzzleNum: solveTimeInSeconds }
-    timesMedium: {}          // { puzzleNum: solveTimeInSeconds }
+    timesMedium: {},         // { puzzleNum: solveTimeInSeconds }
+    timesHard: {}            // { puzzleNum: solveTimeInSeconds }
   }
 };
 
@@ -202,12 +205,12 @@ function generateSolvedBoard(random) {
 }
 
 function generatePuzzle(difficulty, puzzleNumber) {
-  const seed = (difficulty === 'easy' ? 10000 : 20000) + puzzleNumber;
+  const seed = (difficulty === 'easy' ? 10000 : (difficulty === 'medium' ? 20000 : 30000)) + puzzleNumber;
   const random = createRandom(seed);
 
   const solved = generateSolvedBoard(random);
   const puzzle = [...solved];
-  let targetClues = difficulty === 'easy' ? 40 : 31;
+  let targetClues = difficulty === 'easy' ? 40 : (difficulty === 'medium' ? 31 : 24);
   
   const indices = Array.from({ length: 81 }, (_, i) => i);
   for (let i = indices.length - 1; i > 0; i--) {
@@ -332,7 +335,7 @@ function getPuzzleLayout(difficulty, num) {
 }
 
 function setNextUnsolvedPuzzle() {
-  const completed = state.difficulty === 'easy' ? state.stats.completedEasy : state.stats.completedMedium;
+  const completed = state.difficulty === 'easy' ? state.stats.completedEasy : (state.difficulty === 'medium' ? state.stats.completedMedium : state.stats.completedHard);
   let nextNum = 1;
   while (completed.includes(nextNum) && nextNum < 1000) {
     nextNum++;
@@ -372,7 +375,7 @@ function renderCarousel() {
   if (prevBtn) prevBtn.disabled = state.puzzleNumber <= 1;
   if (nextBtn) nextBtn.disabled = state.puzzleNumber >= 1000;
 
-  const completed = state.difficulty === 'easy' ? state.stats.completedEasy : state.stats.completedMedium;
+  const completed = state.difficulty === 'easy' ? state.stats.completedEasy : (state.difficulty === 'medium' ? state.stats.completedMedium : state.stats.completedHard);
 
   // Load Saved Game Info
   let savedPuzzle = null;
@@ -462,7 +465,7 @@ function updatePlayButtonsUI() {
 
   const currentDiff = state.difficulty;
   const currentNum = state.puzzleNumber;
-  const completed = currentDiff === 'easy' ? state.stats.completedEasy : state.stats.completedMedium;
+  const completed = currentDiff === 'easy' ? state.stats.completedEasy : (currentDiff === 'medium' ? state.stats.completedMedium : state.stats.completedHard);
   const isCompleted = completed.includes(currentNum);
 
   // Update Details Card Info
@@ -662,7 +665,7 @@ function showDashboard() {
   updateStatsDisplay();
   
   // Sync selected puzzle number selection
-  const completed = state.difficulty === 'easy' ? state.stats.completedEasy : state.stats.completedMedium;
+  const completed = state.difficulty === 'easy' ? state.stats.completedEasy : (state.difficulty === 'medium' ? state.stats.completedMedium : state.stats.completedHard);
   if (completed.includes(state.puzzleNumber)) {
     setNextUnsolvedPuzzle();
   } else {
@@ -723,10 +726,13 @@ function loadStats() {
         state.stats = {
           completedEasy: Array.isArray(parsed.completedEasy) ? parsed.completedEasy : [],
           completedMedium: Array.isArray(parsed.completedMedium) ? parsed.completedMedium : [],
+          completedHard: Array.isArray(parsed.completedHard) ? parsed.completedHard : [],
           bestEasy: typeof parsed.bestEasy === 'number' ? parsed.bestEasy : null,
           bestMedium: typeof parsed.bestMedium === 'number' ? parsed.bestMedium : null,
+          bestHard: typeof parsed.bestHard === 'number' ? parsed.bestHard : null,
           timesEasy: (parsed.timesEasy && typeof parsed.timesEasy === 'object') ? parsed.timesEasy : {},
-          timesMedium: (parsed.timesMedium && typeof parsed.timesMedium === 'object') ? parsed.timesMedium : {}
+          timesMedium: (parsed.timesMedium && typeof parsed.timesMedium === 'object') ? parsed.timesMedium : {},
+          timesHard: (parsed.timesHard && typeof parsed.timesHard === 'object') ? parsed.timesHard : {}
         };
         return;
       }
@@ -738,10 +744,13 @@ function loadStats() {
   state.stats = {
     completedEasy: [],
     completedMedium: [],
+    completedHard: [],
     bestEasy: null,
     bestMedium: null,
+    bestHard: null,
     timesEasy: {},
-    timesMedium: {}
+    timesMedium: {},
+    timesHard: {}
   };
 }
 
@@ -759,11 +768,13 @@ function formatTime(seconds) {
 function updateStatsDisplay() {
   const easyCount = state.stats.completedEasy ? state.stats.completedEasy.length : 0;
   const medCount = state.stats.completedMedium ? state.stats.completedMedium.length : 0;
+  const hardCount = state.stats.completedHard ? state.stats.completedHard.length : 0;
   
   document.getElementById('stat-easy-solved').innerText = `${easyCount} / 1000`;
   document.getElementById('stat-medium-solved').innerText = `${medCount} / 1000`;
+  document.getElementById('stat-hard-solved').innerText = `${hardCount} / 1000`;
   
-  const bestTimesVal = `Easy: ${formatTime(state.stats.bestEasy)}\nMed: ${formatTime(state.stats.bestMedium)}`;
+  const bestTimesVal = `Easy: ${formatTime(state.stats.bestEasy)}\nMed: ${formatTime(state.stats.bestMedium)}\nHard: ${formatTime(state.stats.bestHard)}`;
   document.getElementById('stat-best-times').innerText = bestTimesVal;
 }
 
@@ -791,6 +802,18 @@ function recordGameWin(difficulty, elapsedSeconds, puzzleNum) {
     const prevTime = state.stats.timesMedium[puzzleNum];
     if (prevTime === undefined || elapsedSeconds < prevTime) {
       state.stats.timesMedium[puzzleNum] = elapsedSeconds;
+    }
+  } else if (difficulty === 'hard') {
+    if (!state.stats.completedHard.includes(puzzleNum)) {
+      state.stats.completedHard.push(puzzleNum);
+    }
+    if (state.stats.bestHard === null || elapsedSeconds < state.stats.bestHard) {
+      state.stats.bestHard = elapsedSeconds;
+    }
+    // Store solve time per puzzle (keep best time if replayed)
+    const prevTime = state.stats.timesHard[puzzleNum];
+    if (prevTime === undefined || elapsedSeconds < prevTime) {
+      state.stats.timesHard[puzzleNum] = elapsedSeconds;
     }
   }
   
@@ -820,8 +843,6 @@ function setCellValue(val) {
     state.checkedErrors[idx] = false;
   }
 
-  let triggerBurst = false;
-
   if (state.notesMode) {
     if (val === 0) {
       state.notes[idx] = Array(10).fill(false);
@@ -831,27 +852,17 @@ function setCellValue(val) {
     }
     playSound('notes');
   } else {
-    const wasCorrect = state.board[idx] === state.solutionBoard[idx];
-    const isNowCorrect = val === state.solutionBoard[idx];
-    
     state.board[idx] = val;
     state.notes[idx] = Array(10).fill(false); 
     
     if (val !== 0) {
       playSound('click');
-      if (!wasCorrect && isNowCorrect) {
-        triggerBurst = true;
-      }
     } else {
       playSound('erase');
     }
   }
 
   updateUI();
-  
-  if (triggerBurst) {
-    createParticleBurst(idx);
-  }
 
   saveGameData();
   checkWinCondition();
@@ -1393,8 +1404,13 @@ document.addEventListener('DOMContentLoaded', () => {
         state.stats = {
           completedEasy: [],
           completedMedium: [],
+          completedHard: [],
           bestEasy: null,
-          bestMedium: null
+          bestMedium: null,
+          bestHard: null,
+          timesEasy: {},
+          timesMedium: {},
+          timesHard: {}
         };
         state.gameInProgress = false;
         state.timer = 0;
@@ -1505,11 +1521,52 @@ document.addEventListener('DOMContentLoaded', () => {
     showDashboard();
   });
 
-  // --- SERVICE WORKER PWA BOOTSTRAP ---
+  // --- SERVICE WORKER PWA BOOTSTRAP & AUTO-UPDATE ---
   if ('serviceWorker' in navigator) {
+    let newWorker;
+    let refreshing = false;
+
     navigator.serviceWorker.register('./sw.js')
-      .then((reg) => console.log('PWA Service Worker registered:', reg.scope))
-      .catch((err) => console.log('PWA Service Worker registration failed:', err));
+      .then((reg) => {
+        console.log('PWA Service Worker registered:', reg.scope);
+
+        // Check for updates on startup
+        reg.update();
+
+        // Listen for new worker installing
+        reg.addEventListener('updatefound', () => {
+          newWorker = reg.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed') {
+              if (navigator.serviceWorker.controller) {
+                // New worker is installed but waiting (skipWaiting needs to be called)
+                showUpdateBanner(newWorker);
+              }
+            }
+          });
+        });
+      })
+      .catch((err) => console.error('PWA Service Worker registration failed:', err));
+
+    // Listen for controller changes (when new worker takes over) and reload the page
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
+    });
+
+    function showUpdateBanner(worker) {
+      const banner = document.getElementById('update-banner');
+      const updateBtn = document.getElementById('update-btn');
+      if (banner && updateBtn) {
+        banner.classList.remove('hidden');
+        updateBtn.onclick = () => {
+          playSound('click');
+          worker.postMessage({ action: 'skipWaiting' });
+        };
+      }
+    }
   }
 
   // --- INITIALIZE VIEWS ---

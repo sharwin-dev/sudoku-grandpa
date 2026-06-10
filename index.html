@@ -17,9 +17,15 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=22">
+  <link rel="stylesheet" href="style.css?v=23">
 </head>
 <body>
+
+  <!-- PWA Auto-Update Banner -->
+  <div id="update-banner" class="update-banner hidden">
+    <span>🎉 A new update is available!</span>
+    <button id="update-btn" class="update-banner-btn">Update Now</button>
+  </div>
 
   <!-- Fullscreen Confetti Canvas (for game completion celebrations) -->
   <canvas id="confetti-canvas"></canvas>
@@ -54,11 +60,17 @@
             <div class="stat-label">Medium Solved</div>
             <div class="stat-value" id="stat-medium-solved">0 / 1000</div>
           </div>
+          <!-- Hard Solved -->
+          <div class="stat-card">
+            <div class="stat-icon">💀</div>
+            <div class="stat-label">Hard Solved</div>
+            <div class="stat-value" id="stat-hard-solved">0 / 1000</div>
+          </div>
           <!-- Best Times Summary -->
           <div class="stat-card">
             <div class="stat-icon">⏱️</div>
             <div class="stat-label">Best Times</div>
-            <div class="stat-value" id="stat-best-times" style="font-size: 0.8rem; line-height: 1.4; white-space: pre-line; font-weight: 700;">Easy: --:--&#10;Med: --:--</div>
+            <div class="stat-value" id="stat-best-times" style="font-size: 0.8rem; line-height: 1.4; white-space: pre-line; font-weight: 700;">Easy: --:--&#10;Med: --:--&#10;Hard: --:--</div>
           </div>
         </div>
       </section>
@@ -71,6 +83,7 @@
         <div class="difficulty-tabs">
           <button id="diff-tab-easy" class="diff-tab-btn" data-diff="easy">Easy</button>
           <button id="diff-tab-medium" class="diff-tab-btn active" data-diff="medium">Medium</button>
+          <button id="diff-tab-hard" class="diff-tab-btn" data-diff="hard">Hard</button>
         </div>
 
         <!-- Visual Puzzle Carousel Selector -->
@@ -250,6 +263,6 @@
   </div>
 
   <!-- Core Game Logic and PWA Initializer -->
-  <script src="app.js?v=22"></script>
+  <script src="app.js?v=23"></script>
 </body>
 </html>
